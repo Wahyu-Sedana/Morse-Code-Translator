@@ -21,14 +21,19 @@ import 'features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'features/playback/data/datasources/haptic_device.dart';
 import 'features/playback/data/datasources/output_settings_local_data_source.dart';
 import 'features/playback/data/datasources/tone_player.dart';
+import 'features/playback/data/datasources/torch_device.dart';
 import 'features/playback/data/repositories/output_settings_repository_impl.dart';
 import 'features/playback/data/repositories/signal_output_repository_impl.dart';
+import 'features/playback/data/services/audio_sharer.dart';
 import 'features/playback/domain/repositories/output_settings_repository.dart';
 import 'features/playback/domain/repositories/signal_output_repository.dart';
 import 'features/playback/domain/usecases/build_signal_timeline.dart';
 import 'features/playback/domain/usecases/get_output_options.dart';
 import 'features/playback/domain/usecases/save_output_options.dart';
 import 'features/playback/presentation/providers/playback_provider.dart';
+import 'features/premium/data/datasources/premium_local_data_source.dart';
+import 'features/premium/data/services/ad_service.dart';
+import 'features/premium/presentation/providers/premium_provider.dart';
 import 'features/reference/data/repositories/reference_repository_impl.dart';
 import 'features/reference/domain/usecases/get_morse_entries.dart';
 import 'features/reference/presentation/providers/reference_provider.dart';
@@ -38,19 +43,33 @@ import 'features/translator/domain/usecases/translate.dart';
 import 'features/translator/presentation/providers/translator_provider.dart';
 
 class InjectionContainer {
-  InjectionContainer({required SharedPreferences prefs, SignalOutputRepository? signalOutputRepository})
-    : historyRepository = HistoryRepositoryImpl(HistoryLocalDataSourceImpl(prefs)),
-      onboardingRepository = OnboardingRepositoryImpl(OnboardingLocalDataSourceImpl(prefs)),
-      outputSettingsRepository = OutputSettingsRepositoryImpl(OutputSettingsLocalDataSourceImpl(prefs)),
-      signalOutputRepository =
-          signalOutputRepository ??
-          SignalOutputRepositoryImpl(tonePlayer: AudioplayersTonePlayer(), hapticDevice: const VibrationHapticDevice());
+  InjectionContainer({
+    required SharedPreferences prefs,
+    SignalOutputRepository? signalOutputRepository,
+    AdService? adService,
+    AudioSharer? audioSharer,
+  }) : historyRepository = HistoryRepositoryImpl(HistoryLocalDataSourceImpl(prefs)),
+       onboardingRepository = OnboardingRepositoryImpl(OnboardingLocalDataSourceImpl(prefs)),
+       outputSettingsRepository = OutputSettingsRepositoryImpl(OutputSettingsLocalDataSourceImpl(prefs)),
+       signalOutputRepository =
+           signalOutputRepository ??
+           SignalOutputRepositoryImpl(
+             tonePlayer: AudioplayersTonePlayer(),
+             hapticDevice: const VibrationHapticDevice(),
+             torchDevice: const MethodChannelTorchDevice(),
+           ),
+       premiumStore = PremiumLocalDataSourceImpl(prefs),
+       adService = adService ?? AdMobAdService(),
+       audioSharer = audioSharer ?? const WavFileSharer();
 
   final MorseCodec codec = const MorseCodec();
   final HistoryRepository historyRepository;
   final OnboardingRepository onboardingRepository;
   final OutputSettingsRepository outputSettingsRepository;
   final SignalOutputRepository signalOutputRepository;
+  final PremiumLocalDataSource premiumStore;
+  final AdService adService;
+  final AudioSharer audioSharer;
 
   List<SingleChildWidget> providers() {
     return [
@@ -60,12 +79,17 @@ class InjectionContainer {
           completeOnboarding: CompleteOnboarding(onboardingRepository),
         ),
       ),
+      Provider<AudioSharer>.value(value: audioSharer),
+      ChangeNotifierProvider<PremiumProvider>(
+        create: (_) => PremiumProvider(store: premiumStore, ads: adService),
+      ),
       ChangeNotifierProvider<PlaybackProvider>(
-        create: (_) => PlaybackProvider(
+        create: (context) => PlaybackProvider(
           buildTimeline: const BuildSignalTimeline(),
           output: signalOutputRepository,
           getOutputOptions: GetOutputOptions(outputSettingsRepository),
           saveOutputOptions: SaveOutputOptions(outputSettingsRepository),
+          canUseFlashlight: () => context.read<PremiumProvider>().isUnlocked,
         )..loadOptions(),
       ),
       ChangeNotifierProvider<TranslatorProvider>(

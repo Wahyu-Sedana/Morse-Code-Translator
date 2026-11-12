@@ -12,6 +12,7 @@ import '../../../history/presentation/providers/history_provider.dart';
 import '../../../playback/presentation/providers/playback_provider.dart';
 import '../../../playback/presentation/widgets/output_settings_sheet.dart';
 import '../../../playback/presentation/widgets/playback_lamp.dart';
+import '../../../playback/presentation/widgets/share_audio.dart';
 import '../../../playback/presentation/widgets/speed_control.dart';
 import '../providers/translator_provider.dart';
 import '../widgets/direction_switcher.dart';
@@ -106,6 +107,9 @@ class _TranslatorPageState extends State<TranslatorPage> {
                     : () => playback.toggle(translation.morse, key: TranslatorPage.playbackKey),
                 onCopy: translation.isEmpty ? null : () => _copy(translation.output),
                 onSave: translation.isEmpty ? null : () => _save(translator),
+                onShareAudio: translation.morse.isEmpty
+                    ? null
+                    : () => shareSignalAudio(context, morse: translation.morse, label: translation.plainText),
               );
               final children = <Widget>[
                 DirectionSwitcher(
@@ -179,10 +183,18 @@ class _TranslatorPageState extends State<TranslatorPage> {
                 const SizedBox(height: 14),
                 const SpeedControl(),
               ];
-              final column = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children);
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                child: compact ? SingleChildScrollView(child: column) : column,
+              const padding = EdgeInsets.fromLTRB(20, 4, 20, 16);
+              // Keep the same widget tree in both modes. The soft keyboard
+              // shrinks the height below the compact threshold; swapping the
+              // wrapper would rebuild the TextField, drop its focus and close
+              // the keyboard again (it looks like the keyboard blinks).
+              return SingleChildScrollView(
+                padding: padding,
+                physics: compact ? null : const NeverScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: compact ? null : constraints.maxHeight - padding.vertical,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+                ),
               );
             },
           ),

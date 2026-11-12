@@ -12,4 +12,6 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final container = InjectionContainer(prefs: prefs);
   runApp(MultiProvider(providers: container.providers(), child: const MorseApp()));
+  // Consent form (EEA/UK/CH only), then the ads SDK and a preloaded rewarded ad.
+  container.adService.initialize();
 }

@@ -16,6 +16,7 @@ class OutputPanel extends StatelessWidget {
     required this.onPlay,
     required this.onCopy,
     required this.onSave,
+    required this.onShareAudio,
   });
 
   final String label;
@@ -26,6 +27,7 @@ class OutputPanel extends StatelessWidget {
   final VoidCallback? onPlay;
   final VoidCallback? onCopy;
   final VoidCallback? onSave;
+  final VoidCallback? onShareAudio;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +108,16 @@ class OutputPanel extends StatelessWidget {
                 background: AppColors.panelRaised,
                 foreground: Colors.white,
                 onPressed: onSave,
+              ),
+              const SizedBox(width: 10),
+              SquareIconButton(
+                icon: Icons.ios_share_rounded,
+                tooltip: 'Share as audio',
+                size: 52,
+                radius: 16,
+                background: AppColors.panelRaised,
+                foreground: Colors.white,
+                onPressed: onShareAudio,
               ),
             ],
           ),

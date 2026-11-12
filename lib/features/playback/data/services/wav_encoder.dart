@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -17,6 +18,19 @@ class WavEncoder {
   final double frequency;
   final double amplitude;
   final Duration ramp;
+
+  /// Audio longer than this is encoded on a background isolate so the UI
+  /// thread never stalls. Shorter clips stay inline because spawning an
+  /// isolate would only add latency.
+  static const Duration backgroundThreshold = Duration(seconds: 10);
+
+  /// Encodes on a background isolate when the clip is long.
+  Future<Uint8List> encodeAsync(List<SignalPulse> timeline) async {
+    final total = timeline.fold<Duration>(Duration.zero, (sum, pulse) => sum + pulse.duration);
+    if (total <= backgroundThreshold) return encode(timeline);
+    final encoder = this;
+    return Isolate.run(() => encoder.encode(timeline));
+  }
 
   int samplesFor(Duration duration) => (duration.inMicroseconds * sampleRate / 1000000).round();
 

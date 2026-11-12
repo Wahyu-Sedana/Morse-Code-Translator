@@ -16,7 +16,9 @@ class PlaybackProvider extends ChangeNotifier {
     required SignalOutputRepository output,
     required GetOutputOptions getOutputOptions,
     required SaveOutputOptions saveOutputOptions,
+    bool Function()? canUseFlashlight,
   }) : _buildTimeline = buildTimeline,
+       _canUseFlashlight = canUseFlashlight ?? (() => false),
        _output = output,
        _getOutputOptions = getOutputOptions,
        _saveOutputOptions = saveOutputOptions;
@@ -25,6 +27,9 @@ class PlaybackProvider extends ChangeNotifier {
   final SignalOutputRepository _output;
   final GetOutputOptions _getOutputOptions;
   final SaveOutputOptions _saveOutputOptions;
+
+  /// Whether the premium flashlight is currently unlocked.
+  final bool Function() _canUseFlashlight;
 
   final List<Timer> _timers = [];
   OutputOptions _options = const OutputOptions();
@@ -57,6 +62,8 @@ class PlaybackProvider extends ChangeNotifier {
 
   Future<void> setVibration(bool value) => _update(_options.copyWith(vibration: value));
 
+  Future<void> setFlashlight(bool value) => _update(_options.copyWith(flashlight: value));
+
   Future<void> _update(OutputOptions options) async {
     if (options == _options) return;
     _options = options;
@@ -80,7 +87,12 @@ class PlaybackProvider extends ChangeNotifier {
     _notify();
 
     try {
-      await _output.play(timeline, sound: _options.sound, vibration: _options.vibration);
+      await _output.play(
+        timeline,
+        sound: _options.sound,
+        vibration: _options.vibration,
+        flashlight: _options.flashlight && _canUseFlashlight(),
+      );
     } catch (_) {}
     if (session != _session) return;
     _schedule(timeline, session);

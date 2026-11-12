@@ -10,6 +10,7 @@ import '../../../../core/widgets/surface_card.dart';
 import '../../../history/domain/entities/history_entry.dart';
 import '../../../history/presentation/providers/history_provider.dart';
 import '../../../playback/presentation/providers/playback_provider.dart';
+import '../../../playback/presentation/widgets/share_audio.dart';
 import '../providers/tap_provider.dart';
 import '../widgets/tap_pad.dart';
 
@@ -69,6 +70,19 @@ class TapPage extends StatelessWidget {
                             background: AppColors.ground,
                             radius: 12,
                             onPressed: tap.isEmpty ? null : () => _save(context, tap),
+                          ),
+                          const SizedBox(width: 6),
+                          SquareIconButton(
+                            icon: Icons.ios_share_rounded,
+                            tooltip: 'Share as audio',
+                            background: AppColors.ground,
+                            radius: 12,
+                            onPressed: tap.isEmpty
+                                ? null
+                                : () {
+                                    tap.commitLetter();
+                                    shareSignalAudio(context, morse: tap.morse, label: tap.decoded);
+                                  },
                           ),
                           const SizedBox(width: 6),
                           SquareIconButton(

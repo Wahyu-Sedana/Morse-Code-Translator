@@ -15,6 +15,7 @@ class OutputSettingsLocalDataSourceImpl implements OutputSettingsLocalDataSource
   static const String soundKey = 'output_sound';
   static const String lightKey = 'output_light';
   static const String vibrationKey = 'output_vibration';
+  static const String flashlightKey = 'output_flashlight';
   static const String wpmKey = 'output_wpm';
 
   final SharedPreferences _prefs;
@@ -26,6 +27,7 @@ class OutputSettingsLocalDataSourceImpl implements OutputSettingsLocalDataSource
       sound: _prefs.getBool(soundKey) ?? defaults.sound,
       light: _prefs.getBool(lightKey) ?? defaults.light,
       vibration: _prefs.getBool(vibrationKey) ?? defaults.vibration,
+      flashlight: _prefs.getBool(flashlightKey) ?? defaults.flashlight,
       wpm: (_prefs.getInt(wpmKey) ?? defaults.wpm).clamp(OutputOptions.minWpm, OutputOptions.maxWpm),
     );
   }
@@ -36,6 +38,7 @@ class OutputSettingsLocalDataSourceImpl implements OutputSettingsLocalDataSource
       _prefs.setBool(soundKey, options.sound),
       _prefs.setBool(lightKey, options.light),
       _prefs.setBool(vibrationKey, options.vibration),
+      _prefs.setBool(flashlightKey, options.flashlight),
       _prefs.setInt(wpmKey, options.wpm),
     ]);
     if (results.contains(false)) throw const CacheException();

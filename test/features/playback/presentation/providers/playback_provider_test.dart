@@ -38,6 +38,7 @@ void main() {
         any(),
         sound: any(named: 'sound'),
         vibration: any(named: 'vibration'),
+        flashlight: any(named: 'flashlight'),
       ),
     ).thenAnswer((_) async {});
     when(() => output.stop()).thenAnswer((_) async {});
@@ -115,7 +116,7 @@ void main() {
       provider.play('.');
       async.flushMicrotasks();
 
-      verify(() => output.play(any(that: hasLength(1)), sound: true, vibration: true)).called(1);
+      verify(() => output.play(any(that: hasLength(1)), sound: true, vibration: true, flashlight: false)).called(1);
     });
   });
 
@@ -161,8 +162,48 @@ void main() {
           any(),
           sound: any(named: 'sound'),
           vibration: any(named: 'vibration'),
+          flashlight: any(named: 'flashlight'),
         ),
       );
+    });
+  });
+
+  group('flashlight', () {
+    PlaybackProvider build({required bool unlocked}) => PlaybackProvider(
+      buildTimeline: const BuildSignalTimeline(),
+      output: output,
+      getOutputOptions: getOptions,
+      saveOutputOptions: saveOptions,
+      canUseFlashlight: () => unlocked,
+    );
+
+    test('blinks only when enabled and premium is unlocked', () {
+      fakeAsync((async) {
+        final premium = build(unlocked: true);
+        premium.setFlashlight(true);
+        async.flushMicrotasks();
+
+        premium.play('.');
+        async.flushMicrotasks();
+
+        verify(() => output.play(any(), sound: true, vibration: false, flashlight: true)).called(1);
+        async.elapse(const Duration(seconds: 1));
+      });
+    });
+
+    test('stays off while premium is locked even if the option is on', () {
+      fakeAsync((async) {
+        final locked = build(unlocked: false);
+        locked.setFlashlight(true);
+        async.flushMicrotasks();
+
+        locked.play('.');
+        async.flushMicrotasks();
+
+        expect(locked.options.flashlight, isTrue);
+        verify(() => output.play(any(), sound: true, vibration: false, flashlight: false)).called(1);
+        async.elapse(const Duration(seconds: 1));
+      });
     });
   });
 }

@@ -1,8 +1,8 @@
 name: morse_translator
 description: "Offline Morse code translator."
-publish_to: 'none'
+publish_to: "none"
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.12.2
@@ -19,6 +19,8 @@ dependencies:
   equatable: ^3.0.0
   dartz: ^0.10.1
   path_provider: ^2.1.6
+  google_mobile_ads: ^9.2.0
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:
@@ -29,7 +31,6 @@ dev_dependencies:
   fake_async: ^1.3.3
 
 flutter:
-
   uses-material-design: true
 
   fonts:
@@ -55,4 +56,3 @@ flutter:
           weight: 500
         - asset: assets/fonts/JetBrainsMono-700.ttf
           weight: 700
-
